@@ -1,0 +1,1 @@
+/workspaces/estudo_de_caso_megastore/megastore_search/target/debug/megastore_search: /workspaces/estudo_de_caso_megastore/megastore_search/src/main.rs /workspaces/estudo_de_caso_megastore/megastore_search/src/product.rs /workspaces/estudo_de_caso_megastore/megastore_search/src/search_engine.rs
