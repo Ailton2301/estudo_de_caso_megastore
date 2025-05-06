@@ -2,82 +2,52 @@ use std::collections::HashMap;
 use crate::product::Product;
 
 pub struct SearchEngine {
-    index: HashMap<String, Vec<u32>>,
-    products: HashMap<u32, Product>,
+    products: Vec<Product>,
+    cache: HashMap<String, Vec<Product>>,
 }
 
 impl SearchEngine {
     pub fn new() -> Self {
-        Self {
-            index: HashMap::new(),
-            products: HashMap::new(),
+        SearchEngine {
+            products: Vec::new(),
+            cache: HashMap::new(),
         }
     }
 
     pub fn add_product(&mut self, product: Product) {
-        let id = product.id;
-        for word in Self::tokenize(&product.name) {
-            self.index.entry(word).or_default().push(id);
-        }
-        for word in Self::tokenize(&product.brand) {
-            self.index.entry(word).or_default().push(id);
-        }
-        for word in Self::tokenize(&product.category) {
-            self.index.entry(word).or_default().push(id);
-        }
-        self.products.insert(id, product);
+        self.products.push(product);
+        self.cache.clear(); // limpa o cache quando o catálogo muda
     }
 
-    fn tokenize(text: &str) -> Vec<String> {
-        text.to_lowercase()
-            .split_whitespace()
-            .map(|s| s.to_string())
-            .collect()
-    }
+    pub fn search(
+        &mut self,
+        name: Option<&str>,
+        brand: Option<&str>,
+        category: Option<&str>,
+    ) -> Vec<Product> {
+        let key = format!(
+            "{}|{}|{}",
+            name.unwrap_or("").to_lowercase(),
+            brand.unwrap_or("").to_lowercase(),
+            category.unwrap_or("").to_lowercase()
+        );
 
-    pub fn search(&self, name: Option<&str>, brand: Option<&str>, category: Option<&str>) -> Vec<&Product> {
-        let mut sets: Vec<Vec<u32>> = Vec::new();
-
-        if let Some(name_filter) = name {
-            let words = Self::tokenize(name_filter);
-            let ids: Vec<u32> = words
-                .iter()
-                .flat_map(|w| self.index.get(w).cloned().unwrap_or_default())
-                .collect();
-            sets.push(ids);
+        if let Some(cached) = self.cache.get(&key) {
+            println!("🔁 Resultado vindo do cache!");
+            return cached.clone();
         }
 
-        if let Some(brand_filter) = brand {
-            let words = Self::tokenize(brand_filter);
-            let ids: Vec<u32> = words
-                .iter()
-                .flat_map(|w| self.index.get(w).cloned().unwrap_or_default())
-                .collect();
-            sets.push(ids);
-        }
+        let results: Vec<Product> = self.products.iter()
+            .filter(|product| {
+                name.map_or(true, |n| product.name.to_lowercase().contains(&n.to_lowercase())) &&
+                brand.map_or(true, |b| product.brand.to_lowercase().contains(&b.to_lowercase())) &&
+                category.map_or(true, |c| product.category.to_lowercase().contains(&c.to_lowercase()))
+            })
+            .cloned()
+            .collect();
 
-        if let Some(category_filter) = category {
-            let words = Self::tokenize(category_filter);
-            let ids: Vec<u32> = words
-                .iter()
-                .flat_map(|w| self.index.get(w).cloned().unwrap_or_default())
-                .collect();
-            sets.push(ids);
-        }
+        self.cache.insert(key, results.clone());
 
-        let final_ids = if sets.is_empty() {
-            self.products.keys().cloned().collect()
-        } else {
-            let mut result = sets[0].clone();
-            for s in sets.iter().skip(1) {
-                result = result.into_iter().filter(|id| s.contains(id)).collect();
-            }
-            result
-        };
-
-        final_ids
-            .iter()
-            .filter_map(|id| self.products.get(id))
-            .collect()
+        results
     }
 }

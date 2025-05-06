@@ -1,33 +1,35 @@
-mod product;
-mod search_engine;
 
-use product::Product;
-use search_engine::SearchEngine;
+mod product;
+use crate::product::Product;
+use std::collections::HashMap;
 
 fn main() {
-    let mut engine = SearchEngine::new();
+    let products = vec![
+        Product {
+            id: 1,
+            name: "Smartphone Galaxy A14".to_string(),
+            brand: "Samsung".to_string(),
+            category: "Eletrônicos".to_string(),
+            attributes: HashMap::from([("cor".to_string(), "preto".to_string())]),
+            popularity: 0.8,
+        },
+        Product {
+            id: 2,
+            name: "Smart TV 55 Polegadas".to_string(),
+            brand: "LG".to_string(),
+            category: "Eletrônicos".to_string(),
+            attributes: HashMap::from([("polegadas".to_string(), "55".to_string())]),
+            popularity: 0.9,
+        },
+    ];
 
-    engine.add_product(Product::new(1, "Smartphone Galaxy A14", "Samsung", "Eletrônicos"));
-    engine.add_product(Product::new(2, "Smart TV 55 Polegadas", "LG", "Eletrônicos"));
-    engine.add_product(Product::new(3, "Camiseta Esportiva", "Nike", "Vestuário"));
-    engine.add_product(Product::new(4, "Tênis de Corrida", "Adidas", "Vestuário"));
-    engine.add_product(Product::new(5, "Liquidificador Turbo", "Philco", "Eletrodomésticos"));
+    println!("Busca por 'smartphone':");
+    products.iter()
+        .filter(|p| p.name.to_lowercase().contains("smartphone"))
+        .for_each(|p| println!("{}\nAtributos: {:?}", p, p.attributes));
 
-    println!("Busca por 'smartphone', marca 'Samsung':");
-    let results = engine.search(Some("smartphone"), Some("samsung"), None);
-    for product in results {
-        println!("{:?}", product);
-    }
-
-    println!("\nBusca por categoria 'Vestuário':");
-    let results = engine.search(None, None, Some("vestuário"));
-    for product in results {
-        println!("{:?}", product);
-    }
-
-    println!("\nBusca por 'TV':");
-    let results = engine.search(Some("TV"), None, None);
-    for product in results {
-        println!("{:?}", product);
-    }
+    println!("\nBusca por 'Samsung':");
+    products.iter()
+        .filter(|p| p.brand.to_lowercase().contains("samsung"))
+        .for_each(|p| println!("{}", p));
 }
